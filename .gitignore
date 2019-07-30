@@ -1,0 +1,11 @@
+**/.idea/
+
+# python
+__pycache__
+*.pyc
+venv*
+.ipynb_checkpoints
+MANIFEST
+*.egg-info
+**/dist/
+**/build/
