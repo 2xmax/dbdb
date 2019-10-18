@@ -28,45 +28,48 @@ class Dbdb:
     def thickness(self, density, r):
         return r * (1 - ((1 - density) ** (1 / 3.0)))
 
-    def disjoining_pressure(self, h, k, m):
-        return (R_g * self.T / self.V_l) * k / ((h / h_0) ** m)
+    def disjoining_pressure(self, h, fhh_k, fhh_m):
+        return (R_g * self.T / self.V_l) * fhh_k / ((h / h_0) ** fhh_m)
 
-    def relative_pressure(self, h, k, m, r):
+    def relative_pressure(self, h, fhh_k, fhh_m, r):
         """h, r in meters"""
-        mu = -(self.disjoining_pressure(h, k, m) + 2 * self.gamma / (r - h)) * self.V_l
+        mu = -(self.disjoining_pressure(h, fhh_k, fhh_m) + 2 * self.gamma / (r - h)) * self.V_l
         return np.exp(mu / (R_g * self.T))
 
-    def condensation_point(self, k, m, pore_size):
+    def relative_pressure_macropore(self, density, fhh_k, fhh_m):
+        h = density * self.V_l / self.reference_s_a
+        return np.exp(-fhh_k / ((h / h_0) ** fhh_m))
+
+    def condensation_point(self, fhh_k, fhh_m, pore_size):
         r = 0.5 * pore_size
 
         def dmu_dh_loss(h):
-            dmu_dh = m * R_g * self.T * k * (h_0 ** m) * (h ** (-m - 1)) - 2 * self.gamma * self.V_l * ((r - h) ** -2)
+            dmu_dh = fhh_m * R_g * self.T * fhh_k * (h_0 ** fhh_m) * (h ** (-fhh_m - 1)) \
+                     - 2 * self.gamma * self.V_l * ((r - h) ** -2)
             return dmu_dh
 
         x_0 = self.thickness(0.2, r)  # arbitrary non-zero initial value
         h_sol = fsolve(dmu_dh_loss, x0=x_0)
-        p_c = self.relative_pressure(h_sol, k, m, r)
+        p_c = self.relative_pressure(h_sol, fhh_k, fhh_m, r)
         n_c = 1 - (1 - h_sol / r) ** 3
         return p_c, n_c
 
-    def evaporation_point(self, k, m, pore_size):
+    def evaporation_point(self, fhh_k, fhh_m, pore_size):
         r = 0.5 * pore_size
 
-        scale = 1e10
+        scale = 1 / r  # normalize the input to [0, 1] domain
 
         def mu_loss(h_scaled):
             h = h_scaled / scale
 
-            # print(f"trial: h = {np.round(h * 1e9, 5)} nm")
-
             def integrand(h_prime):
-                return ((r - h_prime) ** 2) * self.disjoining_pressure(h_prime, k, m)
+                return ((r - h_prime) ** 2) * self.disjoining_pressure(h_prime, fhh_k, fhh_m)
 
             # constraints for solver
             if np.isnan(h) or h <= 0 or h >= r:
                 return np.inf
 
-            p_rel = self.relative_pressure(h, k, m, r)
+            p_rel = self.relative_pressure(h, fhh_k, fhh_m, r)
             if p_rel <= 0:
                 return np.inf
 
@@ -77,29 +80,20 @@ class Dbdb:
 
         x_0 = self.thickness(0.2, r) * scale  # arbitrary non-zero initial value
         bounds = (0, r * scale)
-        # h_sol = fsolve(mu_loss, x0=x_0 * scale)
-        # print(f"h0 = {x_0 * 1e9:.2f} nm, bounds = {bounds[0] * 1e9:.2f} .. {bounds[1] * 1e9:.2f}")
-        # h_sol = scipy.optimize.root(mu_loss, x0=x_0).x
-        # h_sol = scipy.optimize.differential_evolution(mu_loss, x_0, bounds=bounds).x
         h_sol = scipy.optimize.least_squares(mu_loss, x0=x_0, bounds=bounds).x
         loss = np.abs(mu_loss(h_sol[0]))
         h_sol = h_sol / scale
-        if loss > 1e-3 or np.isnan(loss):
-            log_msg = f"d = {pore_size * 1e9:.1f} nm, loss = {loss:.4f}, h_sol = {h_sol[0] * 1e9:.3f} nm"
-            # print(f"fail: {log_msg}")
-            raise Exception(f"loss is too large {log_msg}")
+        if loss > 1e-5 or np.isnan(loss):
+            log_msg = "loss = %f, d = %f nm, h_sol = %f nm" % (loss, pore_size * 1e9, h_sol[0] * 1e9)
+            raise ValueError("loss is too large " + log_msg)
 
-        # else:
-        #     print(f"ok: {log_msg}")
-
-        p_e = self.relative_pressure(h_sol, k, m, r)
+        p_e = self.relative_pressure(h_sol, fhh_k, fhh_m, r)
         n_e = 1 - (1 - h_sol / r) ** 3
         return p_e, n_e
 
     def isotherm(self, fhh_k, fhh_m, pore_size, raw=False, is_ads_branch=True, add_p=True, density=None):
         """
         returns DbDB isotherm
-
         :param fhh_k: FHH fitting param k
         :param fhh_m: FHH fitting param m
         :param pore_size: pore diameter in meters
@@ -113,7 +107,7 @@ class Dbdb:
         r = 0.5 * pore_size
 
         if density is None:
-            # todo: calculate the monolayer density
+            # default value for densities. Keep in mind that the first point is recommended to be a monolayer density
             density = np.linspace(0, 1, 1001)[1:]
             if raw:
                 # division by zero at r == h (happens for raw curves only)
@@ -144,7 +138,6 @@ class Dbdb:
     def kernel(self, rel_pressure_range, pore_sizes_nm, fhh_k, fhh_m, is_ads_branch=True):
         def isotherm_p_interp(pore_size_m):
             n_range = np.linspace(0, 1, 10001)[1:-1]
-            # n_range = np.linspace(0, 1, 11)[1:-1]
 
             if is_ads_branch:
                 p_cut, n_cut = self.condensation_point(fhh_k, fhh_m, pore_size_m)
@@ -152,7 +145,6 @@ class Dbdb:
                 p_cut, n_cut = self.evaporation_point(fhh_k, fhh_m, pore_size_m)
 
             p, n = self.isotherm(fhh_k, fhh_m, pore_size_m, density=n_range, is_ads_branch=is_ads_branch)
-            # p, n = add_compressibility(p, n, p_cut)
             n_interp = scipy.interpolate.interp1d(p, n, fill_value="extrapolate")(rel_pressure_range)
             n_interp[np.where(rel_pressure_range > p_cut)] = 1
             return n_interp
@@ -165,28 +157,29 @@ class Dbdb:
         X = np.column_stack(X_columns)
         return X
 
-    def single_mode_pore_size(self, X, pore_sizes, p, n_exp):
+    def single_mode_pore_size(self, X, pore_sizes, pressure, density):
         """
-
+        predicts pore size by choosing a single isotherm from kernel by matching
+        the points of highest slopes of the isotherms
         :param X: kernel
         :param pore_sizes: any units, the returned value will correspond to the value
-        :param p: relative pressure range
-        :param n_exp: relative density (will be converted to relative units anyway)
+        :param pressure: relative pressure range
+        :param density: relative density (will be converted to relative units anyway)
         :return:
         """
-        is_sorted = np.all(np.diff(p) >= 0)
+        is_sorted = np.all(np.diff(pressure) >= 0)
         if not is_sorted:
             raise ValueError("the algorithm assumes the input data has to be sorted by pressure")
 
-        n_exp = n_exp / np.max(n_exp)
+        density = density / np.max(density)
         p_cut_kernel = np.zeros(len(pore_sizes))
         for psz_idx in range(len(pore_sizes)):
             n_kernel = X[:, psz_idx]
             p_cut_idx = np.argmax(np.diff(n_kernel))
-            p_cut_kernel[psz_idx] = p[p_cut_idx]
+            p_cut_kernel[psz_idx] = pressure[p_cut_idx]
 
         # lin interpolate and find where the slope of the isotherm is highest
-        n_interp = scipy.interpolate.interp1d(p, n_exp, fill_value="extrapolate")
+        n_interp = scipy.interpolate.interp1d(pressure, density, fill_value="extrapolate")
         p_interp_step = np.linspace(0, 1, 1000)
         dndp_max_idx = np.argmax(np.diff(n_interp(p_interp_step)))
         p_cut_exp = p_interp_step[dndp_max_idx]
@@ -194,21 +187,16 @@ class Dbdb:
 
         return pore_sizes[p_cut_psz_idx]
 
-    # relative pressure for given k, m FHH fitting params
-    def relative_pressure_macropore(self, n_ads, k, m):
-        h = n_ads * self.V_l / self.reference_s_a
-        return np.exp(-k / ((h / h_0) ** m))
-
-    def fhh_fit(self, p_rel, n_ads):
+    def fhh_fit(self, pressure, density):
         """
         Frenkel-Halsey-Hill isotherm fit
-        :param p_rel: relative pressure
-        :param n_ads: amount adsorbed
+        :param pressure: relative pressure
+        :param density: amount adsorbed
         :return: k, m fitting params
         """
-        h = n_ads * self.V_l / self.reference_s_a
+        h = density * self.V_l / self.reference_s_a
         x = np.log(h / h_0)
-        y = np.log(-np.log(p_rel))
+        y = np.log(-np.log(pressure))
 
         slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
         k = np.exp(intercept)  # FHH fitting parameter, dimensionless

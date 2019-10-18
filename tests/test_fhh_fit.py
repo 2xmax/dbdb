@@ -3,7 +3,7 @@ from unittest import TestCase
 import numpy as np
 from CoolProp.CoolProp import PropsSI as props
 
-from src import dbdb
+import dbdb
 
 
 class TestFhh_fit(TestCase):
@@ -20,7 +20,7 @@ class TestFhh_fit(TestCase):
                          gamma=props("SURFACE_TENSION", "T", T, "P", dbdb.P_atm, species),  # N/m,
                          reference_s_a=5.9e3)
 
-        exp_data = np.genfromtxt(f"./../data/sampleR.tsv", names=True)
+        exp_data = np.genfromtxt("./../data/maximov2019lang/sampleR.tsv", names=True)
         p_rel = exp_data["p_rel"]
         n_ads = exp_data["Q_cm3_per_g_STP"] / (dbdb.V_m * 1e3)
         k, m = inst.fhh_fit(p_rel, n_ads)
@@ -37,7 +37,7 @@ class TestFhh_fit(TestCase):
                          gamma=props("SURFACE_TENSION", "T", T, "P", dbdb.P_atm, species),  # N/m,
                          reference_s_a=s_a_black_pearl_87K)
 
-        exp_data = np.genfromtxt(f"./../data/arc/BP_fig2_87K.tsv", names=True)
+        exp_data = np.genfromtxt("./../data/arc/BP_fig2_87K.tsv", names=True)
         p_rel = exp_data["p_rel"]
         n_ads = exp_data["Q_cm3_per_g_STP"] / (dbdb.V_m * 1e3)
         k, m = inst.fhh_fit(p_rel, n_ads)

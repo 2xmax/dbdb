@@ -4,7 +4,7 @@ import numpy as np
 import scipy
 from CoolProp.CoolProp import PropsSI as props
 
-from src import dbdb
+import dbdb
 
 
 def mape(a, b):
@@ -32,7 +32,7 @@ class TestIsotherm(TestCase):
                 pore_sizes = np.arange(1, 56, 2)
             else:
                 pore_sizes = np.arange(20, 56, 2)
-            data = np.genfromtxt(f"../data/arc/arc_{pore_size}nm.tsv", names=True)
+            data = np.genfromtxt("../data/arc/arc_%dnm.tsv" % pore_size, names=True)
             kernel = self.inst.kernel(data["P"], pore_sizes, self.fhh_k, self.fhh_m)
             n_ads = data["V"] / np.max(data["V"])
             psd_nnls = scipy.optimize.nnls(kernel, n_ads)[0]

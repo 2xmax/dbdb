@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from src import dbdb
+import dbdb
 
 
 def mape(a, b):
@@ -41,7 +41,8 @@ class TestIsotherm(TestCase):
         ]
         for test_case in test_cases:
             branch = "ads" if test_case["ads"] else "des"
-            data = np.genfromtxt(f"../data/sample{test_case['sample_id']}-{branch}.tsv", names=True)
+            data = np.genfromtxt("../data/maximov2019lang/sample%s-%s.tsv" % (test_case['sample_id'], branch),
+                                 names=True)
             data.sort(order="p_rel")
             pressure = data["p_rel"]
             density = data["Q_cm3_per_g_STP"]
@@ -58,8 +59,8 @@ class TestIsotherm(TestCase):
 
     def test_thickness(self):
         # Given relative density and radius, estimate thickness
-        self.assertAlmostEqual(0, self.inst.thickness(density=0, r=35e-9))
-        self.assertAlmostEqual(35e-9, self.inst.thickness(density=0, r=35e-9))
+        self.assertAlmostEqual(0, self.inst.thickness(density=0, r=35e-9), msg="empty pore")
+        self.assertAlmostEqual(35e-9, self.inst.thickness(density=0, r=35e-9), msg="completely filled pore")
 
     def test_pointwise(self):
         config = [
@@ -69,13 +70,13 @@ class TestIsotherm(TestCase):
         for c in config:
             for is_ads_branch in [True, False]:
                 branch = "ads" if is_ads_branch else "des"
-                data = np.genfromtxt(f"../data/galukhin2019lang/DBdB-sphere-{branch}-sample{c['sample_id']}.csv", names=True,
-                                     delimiter=",")
+                data = np.genfromtxt("../data/galukhin2019lang/DBdB-sphere-%s-sample%s.csv" % (branch, c['sample_id']),
+                                     names=True, delimiter=",")
                 data.sort(order="pp0")
                 data_p = data["pp0"]
-                data_n = data[f"relative_{branch}orption"]
+                data_n = data["relative_%sorption" % branch]
 
-                pore_size = c[f"{branch}_d_nm"] * 1e-9
+                pore_size = c[branch + "_d_nm"] * 1e-9
                 p, n = self.inst.isotherm(self.fhh_k, self.fhh_m, pore_size, density=data_n,
                                           is_ads_branch=is_ads_branch)
                 self.assertAlmostEqual(0, mape(data_n, n[:-1]), delta=1e-8)
@@ -98,3 +99,14 @@ class TestIsotherm(TestCase):
                 else:
                     self.assertAlmostEqual(0, mape(p_head_data, p_head_sol), delta=10)
                     self.assertAlmostEqual(0, mape(p_head_data[1:], p_head_sol[1:]), delta=5)
+
+    def test_monolayer(self):
+        sigma = 0.36154e-9  # m
+        p_monolayer = self.inst.relative_pressure(h=sigma, fhh_k=self.fhh_k, fhh_m=self.fhh_m,
+                                                  r=1e100)  # infinite radius
+        self.assertAlmostEqual(0.1607250978600809, p_monolayer, delta=1e-5)
+
+        # calculated in other way
+        n_ads = self.inst.reference_s_a * sigma / self.inst.V_l
+        p_monolayer = self.inst.relative_pressure_macropore(density=n_ads, fhh_k=self.fhh_k, fhh_m=self.fhh_m)
+        self.assertAlmostEqual(0.1607250978600809, p_monolayer, delta=1e-5)
