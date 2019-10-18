@@ -4,13 +4,13 @@ This repository provides source code for Maximov MA, Galukhin AV, and Gor GY, "P
 
 In short, it generates a kernel of adsorption and desorption isotherms using Frenkel-Halsey-Hill and Derjaguin-Broekhoff-de Boer theories and extracts the pore size distribution using Non-Negative Least Squares regression with Tikhonov (ridge) regularization and Generalized Cross-Validation.
 
-![alt text](https://github.com/2xmax/dbdb_private/blob/docs/docs/TOC.png?raw=true "TOC")
+![alt text](/docs/TOC.png?raw=true "TOC")
 
 Quick start
 ===========
 To install the package without cloning the project, run ```pip install dbdb```.
 
-To run examples from docs, clone the project ```git clone https://github.com/2xmax/dbdb.git && cd dbdb```, run ```pip install . && pip install -r requirements.docs.txt && jupyter notebook``` in terminal/cmd and open the notebooks in your browser. Python 3.5+ is required for the source code, 3.6+ is required for the notebooks with examples.
+To run examples from docs, clone the project ```git clone https://github.com/2xmax/dbdb.git && cd dbdb```, run ```pip3 install . && pip3 install -r requirements.docs.txt && jupyter notebook``` in terminal/cmd and open the notebooks in your browser. Python 3.5+ is required for the source code, 3.6+ is required for the notebooks with examples.
 
 Description of notebooks:
  - [psd_n2.ipynb](https://nbviewer.jupyter.org/github/2xmax/dbdb/blob/master/docs/psd_n2.ipynb) - quick introduction based on the article data
