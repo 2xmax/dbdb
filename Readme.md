@@ -1,6 +1,6 @@
 [![Build status](https://dev.azure.com/supatfs/dbdb/_apis/build/status/dbdb-Python%20package-CI)](https://dev.azure.com/supatfs/dbdb/_build/latest?definitionId=1) [!["THE SUSHI-WARE LICENSE"](https://img.shields.io/badge/license-SUSHI--WARE%F0%9F%8D%A3-blue.svg)](https://github.com/MakeNowJust/sushi-ware)
 
-This repository provides source code for Maximov MA, Galukhin AV, and Gor GY, "Pore Size Distribution of Silica Colloidal Crystals from Nitrogen Adsorption Isotherms", Langmuir 2019 (accepted)
+This repository provides source code for Maximov MA, Galukhin AV, and Gor GY, "Pore Size Distribution of Silica Colloidal Crystals from Nitrogen Adsorption Isotherms", Langmuir 2019 (accepted), [https://doi.org/10.1021/acs.langmuir.9b02252](https://doi.org/10.1021/acs.langmuir.9b02252)
 
 In short, it generates a kernel of adsorption and desorption isotherms using Frenkel-Halsey-Hill and Derjaguin-Broekhoff-de Boer theories and extracts the pore size distribution using Non-Negative Least Squares regression with Tikhonov (ridge) regularization and Generalized Cross-Validation.
 
@@ -31,7 +31,8 @@ BibTeX citation
   journal={Langmuir},
   pages={accepted},
   year={2019},
-  publisher={ACS Publications}
+  publisher={ACS Publications},
+  doi = {10.1021/acs.langmuir.9b02252},
 }
 ```
  
