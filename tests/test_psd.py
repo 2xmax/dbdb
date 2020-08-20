@@ -20,7 +20,7 @@ class TestIsotherm(TestCase):
 
         P_atm = 101325  # Pa
         T = np.round(props("T", "P", P_atm, "Q", 0, species), 2)
-        gamma = props("SURFACE_TENSION", "T", T, "P", P_atm, species)  # N/m
+        gamma = props("SURFACE_TENSION", "T", T, "Q", 0, species)  # N/m
         V_l = 1.0 / props("Dmolar", "T", T, "P", P_atm, species)  # m3/mol
         self.fhh_k = 41.831839393006156
         self.fhh_m = 2.247650098624232

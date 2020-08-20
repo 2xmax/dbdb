@@ -1,6 +1,6 @@
-scipy==1.3.1
-numpy==1.17.2
-CoolProp==6.2.1
+scipy==1.5.2
+numpy==1.19.1
+CoolProp==6.4.1
 jupyter==1.0.0
-pandas==0.25.1
-matplotlib==3.0.3
+pandas==1.1.0
+matplotlib==3.3.1

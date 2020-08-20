@@ -1,0 +1,8 @@
+# used for unit tests in python 3.5 only
+# the config is separate because latest CoolProp is broken in python 3.5
+scipy==1.3.1
+numpy==1.17.2
+CoolProp==6.2.1
+jupyter==1.0.0
+pandas==0.25.1
+matplotlib==3.0.3
