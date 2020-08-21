@@ -17,7 +17,7 @@ class TestFhh_fit(TestCase):
 
         inst = dbdb.Dbdb(T=T,
                          V_l=3.466e-5,
-                         gamma=props("SURFACE_TENSION", "T", T, "P", dbdb.P_atm, species),  # N/m,
+                         gamma=props("SURFACE_TENSION", "T", T, "Q", 0, species),  # N/m,
                          reference_s_a=5.9e3)
 
         exp_data = np.genfromtxt("./../data/maximov2019lang/sampleR.tsv", names=True)
@@ -34,7 +34,7 @@ class TestFhh_fit(TestCase):
 
         inst = dbdb.Dbdb(T=T,
                          V_l=1.0 / props("Dmolar", "T", T, "P", dbdb.P_atm, species),  # m3/mol
-                         gamma=props("SURFACE_TENSION", "T", T, "P", dbdb.P_atm, species),  # N/m,
+                         gamma=props("SURFACE_TENSION", "T", T, "Q", 0, species),  # N/m,
                          reference_s_a=s_a_black_pearl_87K)
 
         exp_data = np.genfromtxt("./../data/arc/BP_fig2_87K.tsv", names=True)
