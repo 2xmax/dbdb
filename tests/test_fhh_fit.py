@@ -37,6 +37,7 @@ class TestFhh_fit(TestCase):
                          gamma=props("SURFACE_TENSION", "T", T, "Q", 0, species),  # N/m,
                          reference_s_a=s_a_black_pearl_87K)
 
+        # Fig. 2 in Gardner L et al, JPC 2001 https://doi.org/10.1021/jp011745+
         exp_data = np.genfromtxt("./../data/arc/BP_fig2_87K.tsv", names=True)
         p_rel = exp_data["p_rel"]
         n_ads = exp_data["Q_cm3_per_g_STP"] / (dbdb.V_m * 1e3)
