@@ -1,5 +1,5 @@
 scipy==1.5.2
-numpy==1.19.1
+numpy==1.22.0
 CoolProp==6.4.1
 jupyter==1.0.0
 pandas==1.1.0
